@@ -7,12 +7,20 @@ Point = namedtuple("Point", ["x", "y"])
 BACKGRD_COL = 3
 WIDTH = 200
 HEIGHT = 200
-UP = Point(0, -2)
-DOWN = Point(0, 2)
-RIGHT = Point(2, 0)
-LEFT = Point(-2, 0)
+UP = Point(0, -3)
+DOWN = Point(0, 3)
+RIGHT = Point(3, 0)
+LEFT = Point(-3, 0)
 START = Point(125, 125)
-spawned = True
+
+
+class Cat:
+    def __init__(self):
+        self.cat = deque()
+        self.cat.append(Point(100, 100))
+        self.cat.append(Point(108, 100))
+        self.cat.append(Point(100, 108))
+        self.cat.append(Point(108, 108))
 
 
 class Food:
@@ -33,28 +41,25 @@ class App:
     def __init__(self):
         # Inicialize with width and height passed
         pyxel.init(WIDTH, HEIGHT, "SushiCat")
+        pyxel.load("SushiCat.pyxres")
+        pyxel.playm(0, loop=True)
         self.reset()
         pyxel.run(self.update, self.draw)
 
     # Main functions: reset, update and draw
 
     def reset(self):
-        # Load game assets like images and music
-        pyxel.load("SushiCat.pyxres")
-        pyxel.playm(0, loop=True)
+        # Load game variables
         self.cat_x = 0
         self.cat_y = 0
-        self.cat = deque()
-        self.cat.append(Point(100, 100))
-        self.cat.append(Point(108, 100))
-        self.cat.append(Point(100, 108))
-        self.cat.append(Point(108, 108))
+        self.cat = Cat().cat
         self.direction = RIGHT
-        self.death = False
-        self.food = Food(100, 100, spawned)
+        self.death = True
+        self.food = Food(100, 100, True)
+        self.score = 0
+        self.game_mode = "normal"
         self.shot = Shot(0, 0, "y")
         self.shot2 = Shot(0, 0, "x")
-        self.score = 0
 
     def update(self):
         if not self.death:
@@ -69,8 +74,20 @@ class App:
         if pyxel.btn(pyxel.KEY_Q):
             pyxel.quit()
 
-        if pyxel.btnp(pyxel.KEY_R):
+        if pyxel.btnp(pyxel.KEY_1):
             self.reset()
+            self.game_mode = "easy"
+            self.death = False
+
+        if pyxel.btnp(pyxel.KEY_2):
+            self.reset()
+            self.game_mode = "normal"
+            self.death = False
+
+        if pyxel.btnp(pyxel.KEY_3):
+            self.reset()
+            self.game_mode = "hard"
+            self.death = False
 
     def draw(self):
         if not self.death:
@@ -79,6 +96,7 @@ class App:
             self.draw_score()
             self.draw_food()
             self.draw_cat()
+
         else:
             self.draw_menu()
 
@@ -140,25 +158,33 @@ class App:
             self.food.spawned = False
 
     def spawn_shot(self):
+        match self.game_mode:
+            case "easy":
+                speed = 2
+            case "normal":
+                speed = 4
+            case "hard":
+                speed = 6
+
         if self.shot.last == "y":
             if self.shot.y < HEIGHT:
-                self.shot.y += 4
+                self.shot.y += speed
             else:
                 self.shot = Shot(0, randint(10, HEIGHT-10), "x")
         elif self.shot.last == "x":
             if self.shot.x < WIDTH:
-                self.shot.x += 4
+                self.shot.x += speed
             else:
                 self.shot = Shot(randint(10, WIDTH-10), 0, "y")
 
         if self.shot2.last == "y":
             if self.shot2.y < HEIGHT:
-                self.shot2.y += 4
+                self.shot2.y += speed
             else:
                 self.shot2 = Shot(0, randint(10, HEIGHT-10), "x")
         elif self.shot2.last == "x":
             if self.shot2.x < WIDTH:
-                self.shot2.x += 4
+                self.shot2.x += speed
             else:
                 self.shot2 = Shot(randint(10, WIDTH-10), 0, "y")
 
@@ -213,11 +239,12 @@ class App:
 
     def draw_menu(self):
         pyxel.cls(8)
-        pyxel.text(80, 80, "GAME OVER,", 7)
+        pyxel.text(80, 80, "MENU", 7)
         pyxel.text(80, 90, f"SCORE:{self.score},", 7)
         pyxel.text(80, 100, "(Q)QUIT,", 7)
-        pyxel.text(80, 110, "(R)RESTART", 7)
+        pyxel.text(80, 110, "(1)EASY", 7)
+        pyxel.text(80, 120, "(2)NORMAL,", 7)
+        pyxel.text(80, 130, "(3)HARD", 7)
 
 
-# pyxel run testes.py
 App()
